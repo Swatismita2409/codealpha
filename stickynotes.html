@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest - Sticky Notes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles (Consistent with your TaskNest theme) */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    html { height: 100%; }
+    /* Removed header styles */
+    /*
+    header {
+      background-color: #9b5939;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; }
+    header nav a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    .accent { color: #fff; text-align: left; }
+    */
+
+    /* Main Content Area */
+    main {
+      flex-grow: 1; /* Allows main content to take up available space */
+      padding: 20px;
+      max-width: 1200px;
+      margin: 20px auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #9b5939; /* Primary color for headings */
+      margin-top: 0;
+      margin-bottom: 25px;
+    }
+
+    .note-input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fefefe;
+    }
+
+    textarea {
+      width: calc(100% - 20px); /* Adjust for padding */
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 1rem;
+      resize: vertical;
+    }
+
+    .color-picker {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: center;
+      flex-wrap: wrap; /* Allow wrapping on small screens */
+    }
+
+    .color-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%; /* Make them round */
+      cursor: pointer;
+      border: 2px solid transparent; /* Default border */
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .color-box:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .color-box.selected {
+      border-color: #9b5939; /* Primary color for selected */
+      transform: scale(1.15); /* Slightly larger for selected */
+      box-shadow: 0 0 0 3px #f4cda7, 0 4px 10px rgba(0,0,0,0.25); /* Accent glow */
+    }
+
+    /* Define actual colors for sticky notes */
+    .color-yellow { background-color: #fffac8; /* Light Yellow */ }
+    .color-blue { background-color: #c8e0ff; /* Light Blue */ }
+    .color-green { background-color: #c8ffc8; /* Light Green */ }
+    .color-pink { background-color: #ffc8e0; /* Light Pink */ }
+    .color-purple { background-color: #e0c8ff; /* Light Purple */ }
+
+    button {
+      padding: 10px 20px;
+      background-color: #bd6635; /* Secondary color */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background-color: #9b5939; /* Primary color on hover */
+      transform: translateY(-2px);
+    }
+    button:active {
+        transform: translateY(0);
+    }
+
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Responsive grid */
+      gap: 20px;
+    }
+
+    .sticky-note {
+      background-color: #fffac8; /* Default note background, overridden by data-color */
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      position: relative;
+      word-wrap: break-word; /* Prevents long words from overflowing */
+      min-height: 150px; /* Minimum height for notes */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .sticky-note:hover {
+        transform: translateY(-5px) rotate(1deg); /* Slight lift and rotate on hover */
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+
+    .sticky-note-text {
+      margin-bottom: 10px;
+      flex-grow: 1; /* Allows text to take up space */
+      font-size: 0.95rem;
+      line-height: 1.4;
+      white-space: pre-wrap; /* Preserves newlines and spaces from textarea */
+    }
+
+    .note-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 10px; /* Space above footer */
+    }
+
+    .delete-note-btn {
+      background: none;
+      border: none;
+      color: #dc3545; /* Red color for delete */
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 3px;
+      transition: color 0.2s ease, background-color 0.2s ease;
+    }
+    .delete-note-btn:hover {
+      color: #c82333; /* Darker red on hover */
+      background-color: rgba(220, 53, 69, 0.1);
+      transform: scale(1.1); /* Slightly larger on hover */
+    }
+
+    .empty-notes-message {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 30px;
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        main {
+            margin: 10px;
+            padding: 15px;
+        }
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .sticky-note {
+            min-height: 120px;
+            padding: 12px;
+        }
+        textarea {
+            min-height: 80px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h2 {
+            font-size: 1.8em;
+        }
+        .color-box {
+            width: 35px;
+            height: 35px;
+        }
+        button {
+            width: 100%;
+        }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Your Sticky Notes</h2>
+
+    <div class="note-input-section">
+      <textarea id="note-textarea" placeholder="Write your sticky note here..."></textarea>
+      <div class="color-picker" id="color-picker">
+        <div class="color-box color-yellow selected" data-color="#fffac8"></div>
+        <div class="color-box color-blue" data-color="#c8e0ff"></div>
+        <div class="color-box color-green" data-color="#c8ffc8"></div>
+        <div class="color-box color-pink" data-color="#ffc8e0"></div>
+        <div class="color-box color-purple" data-color="#e0c8ff"></div>
+      </div>
+      <button id="add-note-btn">Add Sticky Note</button>
+    </div>
+
+    <div class="notes-grid" id="notes-grid">
+      <div class="empty-notes-message" id="empty-notes-message">
+        It's a bit quiet here! Add your first sticky note above.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const LS_NOTES_KEY = 'taskNestStickyNotes';
+    const noteTextarea = document.getElementById('note-textarea');
+    const colorPicker = document.getElementById('color-picker');
+    const addNoteBtn = document.getElementById('add-note-btn');
+    const notesGrid = document.getElementById('notes-grid');
+    const emptyNotesMessage = document.getElementById('empty-notes-message');
+
+    let stickyNotes = [];
+    let selectedColor = '#fffac8'; // Default to yellow
+
+    // Load notes from local storage
+    function loadNotes() {
+      const storedNotes = localStorage.getItem(LS_NOTES_KEY);
+      if (storedNotes) {
+        stickyNotes = JSON.parse(storedNotes);
+      }
+    }
+
+    // Save notes to local storage
+    function saveNotes() {
+      localStorage.setItem(LS_NOTES_KEY, JSON.stringify(stickyNotes));
+    }
+
+    // Render notes to the DOM
+    function renderNotes() {
+      notesGrid.innerHTML = ''; // Clear existing notes
+      if (stickyNotes.length === 0) {
+        emptyNotesMessage.style.display = 'block';
+        return;
+      } else {
+        emptyNotesMessage.style.display = 'none';
+      }
+
+      stickyNotes.forEach((note, index) => {
+        const noteElement = document.createElement('div');
+        noteElement.className = 'sticky-note';
+        noteElement.style.backgroundColor = note.color; // Apply selected color
+
+        const formattedDate = new Date(note.timestamp).toLocaleString('en-IN', {
+          month: 'short', day: 'numeric', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+
+        noteElement.innerHTML = `
+          <div class="sticky-note-text">${note.text}</div>
+          <div class="note-footer">
+            <small>${formattedDate}</small>
+            <button class="delete-note-btn" data-index="${index}">✖</button>
+          </div>
+        `;
+        notesGrid.appendChild(noteElement);
+      });
+    }
+
+    // Initial load and render
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotes();
+      renderNotes();
+    });
+
+    // Handle color selection
+    colorPicker.addEventListener('click', (event) => {
+      const clickedColorBox = event.target.closest('.color-box');
+      if (clickedColorBox) {
+        // Remove 'selected' class from all color boxes
+        Array.from(colorPicker.children).forEach(box => {
+          box.classList.remove('selected');
+        });
+        // Add 'selected' to the clicked color box
+        clickedColorBox.classList.add('selected');
+        selectedColor = clickedColorBox.dataset.color; // Update selected color
+      }
+    });
+
+    // Handle adding a new note
+    addNoteBtn.addEventListener('click', () => {
+      const noteText = noteTextarea.value.trim();
+      if (noteText) {
+        const newNote = {
+          text: noteText,
+          color: selectedColor,
+          timestamp: new Date().toISOString()
+        };
+        stickyNotes.push(newNote);
+        saveNotes();
+        renderNotes();
+        noteTextarea.value = ''; // Clear textarea
+        noteTextarea.focus(); // Keep focus for quick adding
+      } else {
+        alert('Please write something for your sticky note!');
+      }
+    });
+
+    // Handle deleting a note using event delegation
+    notesGrid.addEventListener('click', (event) => {
+      const deleteButton = event.target.closest('.delete-note-btn');
+      if (deleteButton) {
+        const indexToDelete = parseInt(deleteButton.dataset.index);
+        if (confirm('Are you sure you want to delete this sticky note?')) {
+          stickyNotes.splice(indexToDelete, 1); // Remove note from array
+          saveNotes();
+          renderNotes(); // Re-render the grid
+        }
+      }
+    });
+  </script>
+</body>
+</html>

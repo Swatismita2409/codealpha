@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest - Gamification Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Color Palette Variables (Consistent with Todo.html & Reminder.html) */
+    :root {
+      --primary-color: #9b5939; /* Dark Brown */
+      --secondary-color: #bd6635; /* Orange-Brown */
+      --accent-color: #f4cda7; /* Light Orange */
+      --light-bg: #f7f7f7; /* Page background */
+      --card-bg: #fff; /* Card/Main content background */
+      --dark-text: #333;
+      --white-text: #fff;
+      --border-light: #ccc;
+      --box-shadow-light: rgba(0,0,0,0.1);
+      --success-color: #28a745; /* Green for success/points */
+      --gold-color: #ffd700; /* Gold for badges */
+      --silver-color: #c0c0c0; /* Silver for badges */
+      --bronze-color: #cd7f32; /* Bronze for badges */
+      --progress-bg: #e0e0e0;
+      --progress-fill: var(--success-color); /* Green for progress bars */
+      --footer-link-color: #70e5ff; /* Cyan for footer links */
+    }
+
+    /* Global Styles (Consistent with index.html, todo.html, reminder.html) */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--light-bg);
+      color: var(--dark-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    html {
+        height: 100%;
+        scroll-behavior: smooth;
+    }
+   
+    .accent {
+      color: var(--white-text);
+      text-align: left;
+      font-style: italic;
+      opacity: 0.9;
+    }
+
+    /* Main Content Area */
+    main {
+      flex-grow: 1;
+      max-width: 900px; /* Slightly wider for more content */
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      box-shadow: 0 2px 10px var(--box-shadow-light);
+      display: grid; /* Use CSS Grid for layout */
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+        main {
+            grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
+        }
+    }
+
+    /* Sections within main */
+    .section-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 5px var(--box-shadow-light);
+      border-top: 5px solid var(--accent-color); /* Consistent accent border */
+    }
+    .section-card h2 {
+      color: var(--primary-color);
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+
+    /* Gamification Specific Styles */
+    .points-display {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .points-display p {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: var(--dark-text);
+    }
+    .points-value {
+      font-size: 3rem;
+      font-weight: bold;
+      color: var(--secondary-color); /* Orange-Brown for points */
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .level-display {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    .level-display p {
+      font-size: 1.1rem;
+      color: var(--dark-text);
+      margin-bottom: 0.5rem;
+    }
+    .level-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--primary-color); /* Dark Brown for level */
+    }
+    .progress-bar-container {
+        height: 20px;
+        background-color: var(--progress-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 10px;
+        position: relative;
+    }
+    .progress-bar {
+        height: 100%;
+        background-color: var(--progress-fill);
+        width: 0%;
+        border-radius: 10px;
+        transition: width 0.5s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white-text);
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Responsive grid */
+      gap: 1rem;
+      text-align: center;
+    }
+    .badge-card {
+      background-color: var(--light-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px; /* Ensure consistent height */
+    }
+    .badge-card.earned {
+        border: 2px solid var(--gold-color); /* Gold border for earned badges */
+        background-color: #fffacd; /* Light gold background */
+    }
+    .badge-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--border-light); /* Default color for unearned badges */
+    }
+    .badge-card.earned .badge-icon {
+      color: var(--gold-color); /* Gold icon for earned badges */
+    }
+    .badge-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--dark-text);
+    }
+    .badge-card small {
+        font-size: 0.75rem;
+        color: #777;
+        margin-top: 0.3rem;
+    }
+
+    .recent-activity ul {
+      list-style: none;
+      padding: 0;
+    }
+    .recent-activity li {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-left: 5px solid var(--success-color); /* Green accent for activity */
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .recent-activity li small {
+      color: #777;
+    }
+
+    /* Leaderboard Styles */
+    .leaderboard ul {
+        list-style: none;
+        padding: 0;
+    }
+    .leaderboard li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border-light);
+        font-size: 1rem;
+        color: var(--dark-text);
+    }
+    .leaderboard li:last-child {
+        border-bottom: none;
+    }
+    .leaderboard li strong {
+        color: var(--primary-color);
+    }
+    .leaderboard li span {
+        font-weight: bold;
+        color: var(--secondary-color);
+    }
+
+
+    /* Creative Feature: Motivational Quotes */
+    .motivational-quote {
+      text-align: center;
+      font-style: italic;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background-color: var(--accent-color); /* Use accent color for a warm feel */
+      color: var(--dark-text);
+      border-radius: 10px;
+      box-shadow: 0 2px 5px var(--box-shadow-light);
+    }
+    .motivational-quote p {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+    }
+    .motivational-quote cite {
+        display: block;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        color: #555;
+    }
+  </style>
+</head>
+<body>
+  
+
+  <main>
+    <div class="section-card" id="points-and-level">
+      <h2>Your Progress</h2>
+      <div class="points-display">
+        <p>Total Points:</p>
+        <div class="points-value" id="total-points">0</div>
+      </div>
+
+      <div class="level-display">
+        <p>Current Level: <span class="level-value" id="current-level">1</span></p>
+        <p>Points to next level: <span id="points-to-next-level">0</span></p>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="level-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" id="badges">
+      <h2>Badges</h2>
+      <div class="badges-grid" id="badges-grid">
+        <div class="badge-card" data-badge-id="first-task" data-points-required="10">
+            <span class="badge-icon">⭐</span>
+            <p>First Task Champion</p>
+            <small>Complete 1 task</small>
+        </div>
+        <div class="badge-card" data-badge-id="five-tasks" data-points-required="50">
+            <span class="badge-icon">✅</span>
+            <p>Task Master</p>
+            <small>Complete 5 tasks</small>
+        </div>
+        <div class="badge-card" data-badge-id="ten-tasks" data-points-required="100">
+            <span class="badge-icon">🏆</span>
+            <p>Productivity Pro</p>
+            <small>Complete 10 tasks</small>
+        </div>
+        <div class="badge-card" data-badge-id="streak-7" data-points-required="70">
+            <span class="badge-icon">🔥</span>
+            <p>7-Day Streak</p>
+            <small>Complete 1 task for 7 consecutive days</small>
+        </div>
+        <div class="badge-card" data-badge-id="early-bird" data-points-required="20">
+            <span class="badge-icon">☀️</span>
+            <p>Early Bird</p>
+            <small>Complete 3 tasks before 9 AM</small>
+        </div>
+        <div class="badge-card" data-badge-id="category-master" data-points-required="30">
+            <span class="badge-icon">🏷️</span>
+            <p>Category Guru</p>
+            <small>Complete 5 tasks in each category</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" id="recent-activity">
+      <h2>Recent Activity (Last 30 Days)</h2>
+      <ul id="recent-activity-list">
+        </ul>
+    </div>
+
+    <div class="section-card motivational-quote" id="motivational-quote-section">
+      <p id="quote-text"></p>
+      <cite id="quote-author"></cite>
+    </div>
+
+    <div class="section-card" id="leaderboard" style="display: none;"> <h2>Leaderboard</h2>
+        <p>Top TaskNest Users</p>
+        <ul id="leaderboard-list">
+            <li><strong>You</strong> <span><span id="your-leaderboard-points">0</span> Points</span></li>
+            <li><strong>User A</strong> <span>1500 Points</span></li>
+            <li><strong>User B</strong> <span>1200 Points</span></li>
+            <li><strong>User C</strong> <span>900 Points</span></li>
+        </ul>
+        <small><i>(Leaderboard data is simulated for demonstration)</i></small>
+    </div>
+
+  </main>
+
+  
+
+  <script>
+    // Levels configuration
+    const levels = [
+        { level: 1, points: 0, name: "Beginner" },
+        { level: 2, points: 100, name: "Apprentice" },
+        { level: 3, points: 250, name: "Journeyman" },
+        { level: 4, points: 500, name: "Expert" },
+        { level: 5, points: 1000, name: "Master" }
+        // Add more levels as desired
+    ];
+
+    // Motivational quotes
+    const motivationalQuotes = [
+        { quote: "The best way to predict the future is to create it.", author: "Peter Drucker" },
+        { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+        { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+        { quote: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+        { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston S. Churchill" },
+        { quote: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+        { quote: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+        { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" }
+    ];
+
+    // --- Utility Functions ---
+    function getStoredPoints() {
+        return parseInt(localStorage.getItem('taskNestPoints') || '0');
+    }
+
+    function getStoredTasks() {
+        return JSON.parse(localStorage.getItem('taskNestTasks') || '[]');
+    }
+
+    function getStoredBadges() {
+        return JSON.parse(localStorage.getItem('taskNestEarnedBadges') || '[]');
+    }
+
+    function saveEarnedBadges(badges) {
+        localStorage.setItem('taskNestEarnedBadges', JSON.stringify(badges));
+    }
+
+    function formatDate(dateString) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    }
+
+    // --- Gamification Logic ---
+
+    // Function to calculate current level and points to next level
+    function calculateLevel(points) {
+        let currentLevel = 1;
+        let pointsToNextLevel = 0;
+        let progressPercent = 0;
+
+        for (let i = 0; i < levels.length; i++) {
+            if (points >= levels[i].points) {
+                currentLevel = levels[i].level;
+                if (i < levels.length - 1) {
+                    const levelMinPoints = levels[i].points;
+                    const nextLevelMinPoints = levels[i + 1].points;
+                    const pointsInCurrentLevel = points - levelMinPoints;
+                    const pointsNeededForNextLevel = nextLevelMinPoints - levelMinPoints;
+                    pointsToNextLevel = pointsNeededForNextLevel - pointsInCurrentLevel;
+                    progressPercent = (pointsInCurrentLevel / pointsNeededForNextLevel) * 100;
+                } else {
+                    // Max level reached
+                    pointsToNextLevel = 0;
+                    progressPercent = 100;
+                }
+            } else {
+                break; // Points are not enough for this level
+            }
+        }
+        return { currentLevel, pointsToNextLevel, progressPercent };
+    }
+
+    // Function to update the gamification display
+    function updateGamificationDisplay() {
+        const totalPoints = getStoredPoints();
+        document.getElementById('total-points').textContent = totalPoints;
+
+        const { currentLevel, pointsToNextLevel, progressPercent } = calculateLevel(totalPoints);
+        document.getElementById('current-level').textContent = currentLevel;
+        document.getElementById('points-to-next-level').textContent = pointsToNextLevel === 0 ? 'Max Level!' : pointsToNextLevel;
+        document.getElementById('level-progress-bar').style.width = progressPercent + '%';
+    }
+
+    // Function to render all completed tasks
+    function renderAllCompletedTasks() {
+        const allTasks = getStoredTasks();
+        const completedTasks = allTasks.filter(task => task.completed);
+        const allCompletedTasksList = document.getElementById('all-completed-tasks-list'); // Assuming a new list for all completed tasks
+
+        // Check if the element exists before trying to manipulate it
+        if (allCompletedTasksList) {
+            allCompletedTasksList.innerHTML = '';
+            if (completedTasks.length === 0) {
+                allCompletedTasksList.innerHTML = '<li>No tasks completed yet. Start completing tasks to earn points!</li>';
+                return;
+            }
+            completedTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${task.text}</span>
+                    <small>Completed: ${task.completedDate ? formatDate(task.completedDate) : formatDate(task.date)}</small>
+                `;
+                allCompletedTasksList.appendChild(li);
+            });
+        }
+    }
+
+    // Function to render recent activity (last 30 days)
+    function renderRecentActivity() {
+        const allTasks = getStoredTasks();
+        const recentActivityList = document.getElementById('recent-activity-list');
+
+        const now = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(now.getDate() - 30);
+
+        const recentCompletedTasks = allTasks.filter(task => {
+            if (!task.completed || !task.completedDate) return false;
+            const taskCompletedDate = new Date(task.completedDate);
+            return taskCompletedDate >= thirtyDaysAgo && taskCompletedDate <= now;
+        });
+
+        // Sort by completion date descending (most recent first)
+        recentCompletedTasks.sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime());
+
+        recentActivityList.innerHTML = ''; // Clear previous list
+
+        if (recentCompletedTasks.length === 0) {
+            recentActivityList.innerHTML = '<li>No completed tasks in the last 30 days.</li>';
+            return;
+        }
+
+        recentCompletedTasks.forEach(task => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${task.text}</span>
+                <small>${formatDate(task.completedDate)}</small>
+            `;
+            recentActivityList.appendChild(li);
+        });
+    }
+
+    // Function to check and award badges
+    function checkAndAwardBadges() {
+        const totalPoints = getStoredPoints();
+        const allTasks = getStoredTasks();
+        let earnedBadges = getStoredBadges();
+        const badgesGrid = document.getElementById('badges-grid');
+
+        // Points-based badges
+        const badgeDefinitions = [
+            { id: 'first-task', name: 'First Task Champion', icon: '⭐', description: 'Complete 1 task', check: () => allTasks.filter(t => t.completed).length >= 1, pointsRequired: 10 },
+            { id: 'five-tasks', name: 'Task Master', icon: '✅', description: 'Complete 5 tasks', check: () => allTasks.filter(t => t.completed).length >= 5, pointsRequired: 50 },
+            { id: 'ten-tasks', name: 'Productivity Pro', icon: '🏆', description: 'Complete 10 tasks', check: () => allTasks.filter(t => t.completed).length >= 10, pointsRequired: 100 },
+            // Add more complex badges here
+            // Example: 7-Day Streak (Requires more sophisticated date tracking in todo.html)
+            // { id: 'streak-7', name: '7-Day Streak', icon: '🔥', description: 'Complete 1 task for 7 consecutive days', check: () => check7DayStreak(allTasks) },
+            // Example: Early Bird (Requires time tracking for completion)
+            // { id: 'early-bird', name: 'Early Bird', icon: '☀️', description: 'Complete 3 tasks before 9 AM', check: () => checkEarlyBird(allTasks) },
+            // Example: Category Guru (Requires category tracking)
+            // { id: 'category-master', name: 'Category Guru', icon: '🏷️', description: 'Complete 5 tasks in each category', check: () => checkCategoryGuru(allTasks) }
+        ];
+
+        badgeDefinitions.forEach(badge => {
+            // Check if badge is earned and not already in earnedBadges
+            if (badge.check() && !earnedBadges.some(b => b.id === badge.id)) {
+                earnedBadges.push({ id: badge.id, name: badge.name, earnedDate: new Date().toISOString() });
+                // Optionally, add points for earning a badge
+                // totalGamificationPoints += badge.pointsRequired; // Or a fixed bonus for badge
+                // saveGamificationPoints(); // Save updated points
+                alert(`Congratulations! You earned the "${badge.name}" badge!`);
+            }
+        });
+
+        // Update badge display
+        const badgeCards = badgesGrid.querySelectorAll('.badge-card');
+        badgeCards.forEach(card => {
+            const badgeId = card.dataset.badgeId;
+            if (earnedBadges.some(b => b.id === badgeId)) {
+                card.classList.add('earned');
+                const earnedBadgeData = earnedBadges.find(b => b.id === badgeId);
+                const smallElement = card.querySelector('small');
+                if (smallElement) {
+                    smallElement.textContent = `Earned: ${formatDate(earnedBadgeData.earnedDate)}`;
+                }
+            }
+        });
+        saveEarnedBadges(earnedBadges);
+    }
+
+    // Function to display a random motivational quote
+    function displayRandomQuote() {
+        const quoteText = document.getElementById('quote-text');
+        const quoteAuthor = document.getElementById('quote-author');
+        if (quoteText && quoteAuthor) {
+            const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+            const randomQuote = motivationalQuotes[randomIndex];
+            quoteText.textContent = `"${randomQuote.quote}"`;
+            quoteAuthor.textContent = `- ${randomQuote.author}`;
+        }
+    }
+
+
+    // --- Initial Load & Interval Updates ---
+    document.addEventListener('DOMContentLoaded', () => {
+        updateGamificationDisplay();
+        renderAllCompletedTasks(); // If you add a section for "All Completed Tasks"
+        renderRecentActivity();
+        checkAndAwardBadges();
+        displayRandomQuote();
+    });
+
+    // Refresh data every 5 seconds (to keep points/level updated without full page refresh)
+    setInterval(() => {
+        updateGamificationDisplay();
+        renderRecentActivity();
+        checkAndAwardBadges(); // Check for new badges on interval
+        displayRandomQuote(); // Change quote periodically
+    }, 5000); // Refresh every 5 seconds (adjust as needed)
+  </script>
+</body>
+</html>

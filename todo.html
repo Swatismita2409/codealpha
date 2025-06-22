@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskNest - ToDo Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Color Palette Variables for easy management */
+    :root {
+      --primary-color: #9b5939; /* Dark Brown */
+      --secondary-color: #bd6635; /* Orange-Brown */
+      --accent-color: #f4cda7; /* Light Orange */
+      --light-bg: #f7f7f7; /* Page background */
+      --dark-text: #333;
+      --white-text: #fff;
+      --completed-task-bg: #e6ffe6; /* Light green for completed tasks */
+      --completed-task-border: #28a745; /* Green for completed task border */
+      --delete-btn-bg: #dc3545; /* Red for delete button */
+      --delete-btn-hover: #c82333; /* Darker red on hover */
+      --complete-btn-bg: #28a745; /* Green for complete button */
+      --complete-btn-hover: #218838; /* Darker green on hover */
+      --progress-bar-fill: #4caf50; /* Standard green for progress bar */
+      --border-light: #ccc;
+      --box-shadow-light: rgba(0,0,0,0.1);
+    }
+
+    /* Global Styles (Consistent with your provided CSS) */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--light-bg);
+      color: var(--dark-text);
+    }
+    header {
+      background: var(--primary-color);
+      color: var(--white-text);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 1rem;
+    }
+    .task-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    input, select {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid var(--border-light);
+      flex: 1;
+      min-width: 120px;
+    }
+    button {
+      padding: 10px 20px;
+      background: var(--secondary-color);
+      color: var(--white-text);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: var(--primary-color);
+    }
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .task-card {
+      background: var(--white-text);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px var(--box-shadow-light);
+      border-left: 5px solid var(--accent-color);
+      flex-wrap: wrap;
+    }
+    .task-card.completed {
+      background: var(--completed-task-bg);
+      text-decoration: line-through;
+      opacity: 0.8;
+      border-left: 5px solid var(--completed-task-border);
+    }
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+    .filters button {
+        background-color: var(--light-bg);
+        color: var(--dark-text);
+        border: 1px solid var(--border-light);
+    }
+    .filters button.active {
+        background-color: var(--secondary-color);
+        color: var(--white-text);
+        border-color: var(--secondary-color);
+    }
+    .filters button:hover:not(.active) {
+        background-color: var(--accent-color);
+        color: var(--dark-text);
+    }
+
+    .progress-bar-container {
+      height: 25px;
+      background: var(--border-light);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      position: relative; /* For text positioning */
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--progress-bar-fill);
+      width: 0%;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative; /* Ensure text is positioned within the bar */
+    }
+    /* This pseudo-element will display the percentage text */
+    .progress-bar::after {
+        content: attr(data-label);
+        color: var(--white-text); /* Default white text */
+        font-weight: bold;
+        font-size: 0.9rem;
+        /* Using text-shadow for better readability over varied background */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+    }
+
+    .floating-add-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--secondary-color);
+      color: var(--white-text);
+      border: none;
+      border-radius: 50%;
+      font-size: 2rem;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    .floating-add-btn:hover {
+        background: var(--primary-color);
+        transform: translateY(-3px);
+    }
+
+    .hidden {
+      display: none;
+    }
+    .task-card > div:first-child {
+        flex-grow: 1;
+        margin-right: 10px;
+        word-break: break-word;
+    }
+    .task-card button {
+        padding: 8px 12px;
+        font-size: 1.1rem;
+        line-height: 1;
+        border-radius: 5px;
+        background: none; /* Reset button background */
+        color: inherit;
+        border: 1px solid var(--border-light);
+        transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    }
+    .task-card button:hover {
+        transform: translateY(-1px);
+    }
+    .task-card button.complete-btn {
+        background-color: var(--complete-btn-bg);
+        color: var(--white-text);
+        border-color: var(--complete-btn-bg);
+    }
+    .task-card button.complete-btn:hover {
+        background-color: var(--complete-btn-hover);
+        border-color: var(--complete-btn-hover);
+    }
+    .task-card button.delete-btn {
+        background-color: var(--delete-btn-bg);
+        color: var(--white-text);
+        border-color: var(--delete-btn-bg);
+    }
+    .task-card button.delete-btn:hover {
+        background-color: var(--delete-btn-hover);
+        border-color: var(--delete-btn-hover);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+        .task-input {
+            flex-direction: column;
+        }
+        input, select, .task-input button {
+            width: 100%;
+            min-width: unset;
+        }
+        .filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filters button {
+            width: 100%;
+        }
+        .task-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .task-card > div:first-child {
+            margin-bottom: 10px;
+            margin-right: 0;
+            width: 100%;
+        }
+        .task-card > div:last-child {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    }
+  </style>
+</head>
+<body>
+  <header>TaskNest - ToDo Dashboard</header>
+  <div class="container">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progress-bar" data-label="0%"></div>
+    </div>
+    <div class="task-input">
+      <input type="text" id="task-text" placeholder="Enter your task..." />
+      <input type="date" id="task-date" />
+      <select id="priority">
+        <option value="" disabled selected>Priority</option>
+        <option>Low</option>
+        <option>Medium</option>
+        <option>High</option>
+      </select>
+      <select id="category">
+        <option value="" disabled selected>Category</option>
+        <option>Work</option>
+        <option>Study</option>
+        <option>Personal</option>
+        <option value="Custom">Custom</option>
+      </select>
+      <input type="text" id="custom-category" class="hidden" placeholder="Custom category" />
+      <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <div class="filters">
+      <button id="filter-all" onclick="filterTasks('all')">All</button>
+      <button id="filter-completed" onclick="filterTasks('completed')">Completed</button>
+      <button id="filter-pending" onclick="filterTasks('pending')">Pending</button>
+      <button id="filter-low" onclick="filterTasks('Low')">Low Priority</button>
+      <button id="filter-medium" onclick="filterTasks('Medium')">Medium Priority</button>
+      <button id="filter-high" onclick="filterTasks('High')">High Priority</button>
+    </div>
+
+    <div class="task-list" id="task-list"></div>
+  </div>
+
+  <button class="floating-add-btn" onclick="document.getElementById('task-text').focus()">+</button>
+
+  <script>
+    let tasks = localStorage.getItem('taskNestTasks') ? JSON.parse(localStorage.getItem('taskNestTasks')) : [];
+    const taskList = document.getElementById('task-list');
+    const progressBarDiv = document.getElementById('progress-bar');
+    const customCat = document.getElementById('custom-category');
+    let completedTasksCount = localStorage.getItem('taskNestCompletedCount') ? parseInt(localStorage.getItem('taskNestCompletedCount')) : 0;
+    let totalGamificationPoints = localStorage.getItem('taskNestPoints') ? parseInt(localStorage.getItem('taskNestPoints')) : 0;
+
+    function saveTasks() {
+        localStorage.setItem('taskNestTasks', JSON.stringify(tasks));
+        updateCompletedTasksCount();
+    }
+
+    function updateCompletedTasksCount() {
+        completedTasksCount = tasks.filter(task => task.completed).length;
+        localStorage.setItem('taskNestCompletedCount', completedTasksCount);
+    }
+
+    function saveGamificationPoints() {
+        localStorage.setItem('taskNestPoints', totalGamificationPoints);
+    }
+
+    document.getElementById('category').addEventListener('change', () => {
+      customCat.classList.toggle('hidden', document.getElementById('category').value !== 'Custom');
+    });
+
+    function addTask() {
+      const text = document.getElementById('task-text').value.trim();
+      const date = document.getElementById('task-date').value;
+      const priority = document.getElementById('priority').value;
+      const category = document.getElementById('category').value === 'Custom'
+        ? customCat.value.trim()
+        : document.getElementById('category').value;
+
+      if (!text) {
+        alert("Task can't be empty!");
+        return;
+      }
+      if (!priority) {
+        alert("Please select a priority!");
+        return;
+      }
+      if (!category) {
+        alert("Please select a category!");
+        return;
+      }
+
+      tasks.push({
+        text,
+        date,
+        priority,
+        category,
+        completed: false,
+        addedDate: new Date().toISOString()
+      });
+      saveTasks();
+      clearInputs();
+      renderTasks();
+    }
+
+    function clearInputs() {
+      document.getElementById('task-text').value = '';
+      document.getElementById('task-date').value = '';
+      document.getElementById('priority').value = '';
+      document.getElementById('category').value = '';
+      customCat.value = '';
+      customCat.classList.add('hidden');
+    }
+
+    let currentFilter = 'all';
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      let filteredTasks = tasks;
+
+      if (currentFilter === 'completed') {
+        filteredTasks = tasks.filter(t => t.completed);
+      } else if (currentFilter === 'pending') {
+        filteredTasks = tasks.filter(t => !t.completed);
+      } else if (currentFilter === 'Low' || currentFilter === 'Medium' || currentFilter === 'High') {
+        filteredTasks = tasks.filter(t => t.priority === currentFilter);
+      }
+
+      if (filteredTasks.length === 0) {
+          const emptyState = document.createElement('div');
+          emptyState.className = 'task-card';
+          emptyState.innerHTML = `<div><strong>No tasks to display for this filter.</strong></div>`;
+          taskList.appendChild(emptyState);
+      }
+
+      filteredTasks.forEach((task, idx) => {
+        const actualIndex = tasks.indexOf(task); // Get the actual index in the 'tasks' array
+
+        const taskCard = document.createElement('div');
+        taskCard.className = 'task-card' + (task.completed ? ' completed' : '');
+
+        taskCard.innerHTML = `
+          <div>
+            <strong>${task.text}</strong><br/>
+            <small>${task.date || 'No due date'} | ${task.priority} | ${task.category}</small>
+          </div>
+          <div>
+            <button class="complete-btn" onclick="toggleComplete(${actualIndex})">${task.completed ? '✔️' : '☑️'}</button>
+            <button class="delete-btn" onclick="deleteTask(${actualIndex})">✖️</button>
+          </div>
+        `;
+
+        taskList.appendChild(taskCard);
+      });
+
+      const totalOverallCompleted = tasks.filter(t => t.completed).length;
+      updateProgressBar(totalOverallCompleted, tasks.length);
+
+      document.querySelectorAll('.filters button').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.id === `filter-${currentFilter.toLowerCase()}`) {
+              btn.classList.add('active');
+          } else if (currentFilter === 'all' && btn.id === 'filter-all') {
+             btn.classList.add('active');
+          }
+      });
+    }
+
+    function toggleComplete(index) {
+      if (index > -1 && index < tasks.length) {
+        if (!tasks[index].completed) {
+            totalGamificationPoints += 10;
+            saveGamificationPoints();
+            tasks[index].completedDate = new Date().toISOString();
+        } else {
+            // Optional: Deduct points if task is uncompleted after being completed
+            // For now, no deduction on uncomplete
+            delete tasks[index].completedDate;
+        }
+        tasks[index].completed = !tasks[index].completed;
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function deleteTask(index) {
+      if (index > -1 && index < tasks.length) {
+        tasks.splice(index, 1);
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function filterTasks(type) {
+        currentFilter = type;
+        renderTasks();
+    }
+
+    function updateProgressBar(completed, total) {
+      const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+      progressBarDiv.style.width = percentage + '%';
+      progressBarDiv.dataset.label = percentage + '%'; /* Set data-label for CSS content */
+    }
+
+    // Initial render when the page loads to display any saved tasks
+    renderTasks();
+  </script>
+</body>
+</html>

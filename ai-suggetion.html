@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest - AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Color Palette Variables (Consistent with other TaskNest pages) */
+    :root {
+      --primary-color: #9b5939; /* Dark Brown */
+      --secondary-color: #bd6635; /* Orange-Brown */
+      --accent-color: #f4cda7; /* Light Orange */
+      --light-bg: #f7f7f7; /* Page background */
+      --card-bg: #fff; /* Card/Main content background */
+      --dark-text: #333;
+      --white-text: #fff;
+      --border-light: #ccc;
+      --box-shadow-light: rgba(0,0,0,0.1);
+      --success-color: #28a745; /* Green for success */
+      --error-color: #dc3545; /* Red for errors */
+      --footer-link-color: #70e5ff; /* Cyan for footer links */
+      --loading-bg: #e0f7fa; /* Light blue for loading state */
+      --loading-text: #007bff; /* Blue for loading text */
+      --ai-response-bg: #f0f0f0; /* Background for AI response box */
+      --ai-response-border: #d0d0d0; /* Border for AI response box */
+    }
+
+    /* Global Styles */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--light-bg);
+      color: var(--dark-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    html { height: 100%; }
+
+    /* Removed header styles */
+    /*
+    header {
+      background: var(--primary-color);
+      color: var(--white-text);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    */
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 10px var(--box-shadow-light);
+      flex-grow: 1; /* Allows container to expand */
+    }
+    h2 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 2.2em;
+    }
+
+    .ai-input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 2rem;
+      padding: 15px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background-color: #fefefe;
+    }
+
+    textarea {
+      width: calc(100% - 24px); /* Account for padding */
+      min-height: 120px;
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      border-radius: 5px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 1rem;
+      resize: vertical;
+      box-sizing: border-box; /* Include padding in width/height */
+    }
+
+    button {
+      padding: 12px 20px;
+      background: var(--secondary-color);
+      color: var(--white-text);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.3s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background: var(--primary-color);
+      transform: translateY(-2px);
+    }
+    button:active {
+        transform: translateY(0);
+    }
+
+    .ai-response-section {
+      background-color: var(--ai-response-bg);
+      border: 1px solid var(--ai-response-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      min-height: 150px;
+      white-space: pre-wrap; /* Preserves whitespace and line breaks */
+      font-size: 1em;
+      line-height: 1.6;
+      color: var(--dark-text);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      overflow-y: auto; /* Enable scrolling for long responses */
+      max-height: 400px;
+    }
+
+    .loading-message {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.1em;
+      color: var(--loading-text);
+      display: none; /* Hidden by default */
+      background-color: var(--loading-bg);
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .container {
+            margin: 15px;
+            padding: 1rem;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+        }
+        button {
+            width: 100%;
+        }
+        .ai-response-section {
+            padding: 1rem;
+            min-height: 100px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h2 {
+            font-size: 1.8em;
+        }
+        .ai-input-section {
+            padding: 10px;
+            gap: 10px;
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Assistant & Suggestions</h2>
+
+    <div class="ai-input-section">
+      <textarea id="user-input" placeholder="Ask for suggestions on tasks, productivity tips, time management, or anything related to your goals!"></textarea>
+      <button id="get-suggestion-btn">Get AI Suggestion</button>
+    </div>
+
+    <div class="loading-message" id="loading-message">
+        Thinking... Please wait for AI to generate suggestions.
+    </div>
+
+    <div class="ai-response-section" id="ai-response-div">
+      Your AI suggestions will appear here. For example, you can ask:
+      <br><br>
+      "How can I stay motivated to complete daily tasks?"<br>
+      "Give me tips for better time management."<br>
+      "Suggest a good routine for morning productivity."
+    </div>
+  </div>
+
+  <script>
+    const userInputField = document.getElementById('user-input');
+    const getSuggestionBtn = document.getElementById('get-suggestion-btn');
+    const aiResponseDiv = document.getElementById('ai-response-div');
+    const loadingMessage = document.getElementById('loading-message');
+
+    getSuggestionBtn.addEventListener('click', () => {
+      getAISuggestion();
+    });
+
+    userInputField.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) { // Trigger on Enter, but not Shift+Enter for new line
+        event.preventDefault(); // Prevent default form submission
+        getAISuggestion();
+      }
+    });
+
+    async function getAISuggestion() {
+      const userInput = userInputField.value.trim();
+      if (!userInput) {
+        aiResponseDiv.textContent = "Please enter your query to get a suggestion.";
+        return;
+      }
+
+      aiResponseDiv.textContent = ''; // Clear previous response
+      loadingMessage.style.display = 'block'; // Show loading message
+
+      try {
+        // --- Placeholder for actual AI API call ---
+        // In a real application, you would send userInput to a backend API
+        // For example, using fetch:
+        /*
+        const response = await fetch('/api/get-ai-suggestion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: userInput })
+        });
+        const data = await response.json();
+        aiResponseDiv.textContent = data.suggestion || "No specific suggestion.";
+        */
+
+        // Simulate AI thinking time
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
+
+        // Placeholder AI response (replace with actual AI output from your backend)
+        const simulatedAIResponse = `AI Assistant: Your input was: "${userInput}".\n\nTo manage your tasks effectively, you could try:\n\n1.  **Prioritization:** Use the 'High', 'Medium', 'Low' priorities in the ToDo list.\n2.  **Due Dates:** Set clear due dates for your tasks and reminders.\n3.  **Break Down Tasks:** For large tasks, break them into smaller, manageable steps.\n4.  **Regular Reviews:** Check your progress daily or weekly.\n5.  **Gamification:** Use the gamification features to stay motivated!\n\n(This is a prototype response. Real AI suggestions will appear here once connected to a backend!)`;
+
+        aiResponseDiv.textContent = simulatedAIResponse;
+
+      } catch (error) {
+        console.error("Error communicating with AI backend or processing suggestion:", error);
+        aiResponseDiv.textContent = "Oops! Could not get suggestions. Please try again later or check your browser's console for errors.";
+      } finally {
+        loadingMessage.style.display = 'none'; // Hide loading message
+      }
+    }
+  </script>
+</body>
+</html>

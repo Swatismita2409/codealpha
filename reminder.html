@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest - Reminders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Color Palette Variables for easy management (Consistent with Todo.html) */
+    :root {
+      --primary-color: #9b5939; /* Dark Brown */
+      --secondary-color: #bd6635; /* Orange-Brown */
+      --accent-color: #f4cda7; /* Light Orange */
+      --light-bg: #f7f7f7; /* Page background */
+      --card-bg: #fff; /* Card/Main content background */
+      --dark-text: #333;
+      --white-text: #fff;
+      --border-light: #ddd;
+      --box-shadow-light: rgba(0,0,0,0.1);
+      --past-due-color: #dc3545; /* Red for past due reminders */
+      --past-due-border: #c82333; /* Darker red border for past due */
+      --footer-link-color: #70e5ff; /* Cyan for footer links */
+    }
+
+    /* Global Styles (Consistent with your existing structure for consistency) */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--light-bg);
+      color: var(--dark-text);
+    }
+    /* Removed header styles */
+    /*
+    header {
+      background: var(--primary-color);
+      color: var(--white-text);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    */
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 10px var(--box-shadow-light);
+    }
+    h2 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .reminder-input {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 1.5rem;
+    }
+    .reminder-input input[type="text"],
+    .reminder-input input[type="datetime-local"] {
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid var(--border-light);
+      width: calc(100% - 24px); /* Account for padding */
+    }
+    .reminder-input button {
+      padding: 12px 20px;
+      background: var(--secondary-color);
+      color: var(--white-text);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.3s ease;
+    }
+    .reminder-input button:hover {
+      background: var(--primary-color);
+    }
+
+    .reminder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .reminder-card {
+      background: var(--light-bg);
+      border-left: 5px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px var(--box-shadow-light);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .reminder-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    .reminder-card.past-due {
+        border-left-color: var(--past-due-border);
+        background-color: #ffe6e6; /* Lighter red tint */
+        opacity: 0.9;
+    }
+    .reminder-card.past-due .reminder-info strong,
+    .reminder-card.past-due .reminder-info small {
+        color: var(--past-due-color);
+    }
+
+    .reminder-info {
+      flex-grow: 1;
+      margin-right: 15px;
+      word-break: break-word; /* Prevents long text from overflowing */
+    }
+    .reminder-info strong {
+      display: block;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .reminder-info small {
+      color: #666;
+      font-size: 0.9em;
+    }
+    .reminder-card button {
+      background: var(--delete-btn-bg); /* Use specific delete button color */
+      color: var(--white-text);
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+    .reminder-card button:hover {
+      background: var(--delete-btn-hover);
+    }
+    .empty-state {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        border: 1px dashed var(--border-light);
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+        .container {
+            margin: 15px;
+            padding: 1rem;
+        }
+        .reminder-input input[type="text"],
+        .reminder-input input[type="datetime-local"] {
+            width: calc(100% - 20px); /* Adjust for smaller padding if needed */
+            padding: 10px;
+        }
+        .reminder-input button {
+            width: 100%;
+        }
+        .reminder-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .reminder-info {
+            margin-right: 0;
+            width: 100%;
+            text-align: left;
+        }
+        .reminder-card button {
+            width: 100%;
+            margin-top: 5px; /* Add some space if button wraps */
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Your Reminders</h2>
+    <div class="reminder-input">
+      <input type="text" id="reminder-text" placeholder="What do you want to be reminded about?" />
+      <input type="datetime-local" id="reminder-time" />
+      <button onclick="addReminder()">Add Reminder</button>
+    </div>
+
+    <div class="reminder-list" id="reminder-list"></div>
+  </div>
+
+  <script>
+    let reminders = localStorage.getItem('taskNestReminders') ? JSON.parse(localStorage.getItem('taskNestReminders')) : [];
+    const reminderList = document.getElementById('reminder-list');
+    const reminderText = document.getElementById('reminder-text');
+    const reminderTime = document.getElementById('reminder-time');
+
+    function saveReminders() {
+        localStorage.setItem('taskNestReminders', JSON.stringify(reminders));
+    }
+
+    function addReminder() {
+        const text = reminderText.value.trim();
+        const time = reminderTime.value; // This will be in "YYYY-MM-DDTHH:MM" format
+
+        if (!text) {
+            alert("Reminder text cannot be empty!");
+            return;
+        }
+        if (!time) {
+            alert("Please set a date and time for the reminder!");
+            return;
+        }
+
+        const now = new Date();
+        const reminderDateTime = new Date(time);
+
+        if (reminderDateTime <= now) {
+            alert("Reminder time must be in the future!");
+            return;
+        }
+
+        const newReminder = {
+            id: Date.now(), // Unique ID for each reminder
+            text,
+            time,
+            setAt: now.toISOString() // When the reminder was set
+        };
+
+        reminders.push(newReminder);
+        saveReminders();
+        scheduleNotification(newReminder.text, reminderDateTime, newReminder.id); // Schedule the notification
+        clearInputs();
+        renderReminders();
+    }
+
+    function renderReminders() {
+        reminderList.innerHTML = ''; // Clear existing reminders
+
+        if (reminders.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = 'No reminders set yet. Add one above!';
+            reminderList.appendChild(emptyState);
+            return;
+        }
+
+        // Sort reminders by time (soonest first)
+        const sortedReminders = [...reminders].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+        sortedReminders.forEach(reminder => {
+            const reminderCard = document.createElement('div');
+            reminderCard.className = 'reminder-card';
+
+            const reminderDateTime = new Date(reminder.time);
+            const now = new Date();
+            const isPastDue = reminderDateTime <= now;
+
+            if (isPastDue) {
+                reminderCard.classList.add('past-due');
+            }
+
+            const formattedTime = new Intl.DateTimeFormat('en-IN', {
+                dateStyle: 'full',
+                timeStyle: 'short'
+            }).format(reminderDateTime);
+
+            reminderCard.innerHTML = `
+                <div class="reminder-info">
+                    <strong>${reminder.text}</strong>
+                    <small>Due: ${formattedTime}</small>
+                </div>
+                <button onclick="deleteReminder(${reminder.id})">Delete</button>
+            `;
+            reminderList.appendChild(reminderCard);
+        });
+    }
+
+    function deleteReminder(idToDelete) {
+        // Clear any pending notification for this reminder
+        const reminder = reminders.find(r => r.id === idToDelete);
+        if (reminder && reminder.notificationTimeoutId) {
+            clearTimeout(reminder.notificationTimeoutId);
+        }
+
+        reminders = reminders.filter(reminder => reminder.id !== idToDelete);
+        saveReminders();
+        renderReminders();
+    }
+
+    // --- Notification Logic ---
+    function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.warn("This browser does not support desktop notification");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            console.log("Notification permission already granted.");
+            return;
+        }
+
+        if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    console.log("Notification permission granted!");
+                } else {
+                    console.warn("Notification permission denied!");
+                }
+            });
+        }
+    }
+
+    // Request permission on page load or user interaction
+    document.addEventListener('DOMContentLoaded', requestNotificationPermission);
+
+    function scheduleNotification(text, dateTime, reminderId) {
+        const now = new Date();
+        const delay = dateTime.getTime() - now.getTime(); // Milliseconds until the reminder
+
+        if (delay < 0) { // If somehow a past reminder gets scheduled
+            console.warn("Attempted to schedule a past reminder. Not scheduling notification.");
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            if (Notification.permission === "granted") {
+                new Notification("TaskNest Reminder!", {
+                    body: text,
+                    icon: 'https://via.placeholder.com/48' // You can replace with your actual app icon
+                });
+            } else {
+                // Fallback for browsers/users who deny notifications
+                alert(`Reminder: ${text} is due now!`);
+            }
+            // After notification, remove the reminder from the list and re-render
+            reminders = reminders.filter(r => r.id !== reminderId);
+            saveReminders();
+            renderReminders();
+        }, delay);
+
+        // Store timeout ID with the reminder so it can be cancelled if reminder is deleted
+        const reminderToUpdate = reminders.find(r => r.id === reminderId);
+        if (reminderToUpdate) {
+            reminderToUpdate.notificationTimeoutId = timeoutId;
+            saveReminders(); // Save to localStorage to persist the timeoutId (though it will be invalid on page refresh)
+        }
+    }
+
+    // Clear input fields
+    function clearInputs() {
+        reminderText.value = '';
+        reminderTime.value = '';
+    }
+
+    // On page load:
+    renderReminders(); // Display any saved reminders
+    // Re-schedule notifications for future reminders when the page loads
+    reminders.forEach(reminder => {
+        const reminderDateTime = new Date(reminder.time);
+        // Only schedule if the reminder is in the future
+        if (reminderDateTime > new Date()) {
+            scheduleNotification(reminder.text, reminderDateTime, reminder.id);
+        }
+    });
+  </script>
+</body>
+</html>

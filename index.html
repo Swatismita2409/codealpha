@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest</title>
+  <meta name="description" content="TaskNest helps you manage your tasks, set reminders, track progress, and boost productivity with AI suggestions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles for consistency and Sticky Footer */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    html {
+        height: 100%;
+        scroll-behavior: smooth;
+    }
+    header {
+      background-color: #9b5939;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      width: 100%;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem; /* Adjusted for better visibility */
+    }
+    header nav a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+      transition: border-bottom 0.2s ease;
+      cursor: pointer;
+      font-size: 1.1em; /* Made navigation links slightly larger */
+    }
+    header nav a.active {
+        font-weight: bold;
+        border-bottom: 2px solid #f4cda7;
+        padding-bottom: 3px;
+    }
+    header nav a:hover:not(.active) {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+        padding-bottom: 3px;
+    }
+
+    .accent {
+      color: #f4cda7;
+      text-align: left;
+    }
+    .hero {
+      background: url('1748143866777.jpg') no-repeat center/cover; /* Placeholder Image URL */
+      color: white;
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    .hero h2 {
+      font-size: 3.5rem; /* Larger for impact */
+      margin-bottom: 15px;
+    }
+    .hero p {
+        font-size: 1.3rem; /* Larger sub-text */
+        margin-bottom: 30px;
+    }
+    .cta-button {
+        background-color: #bd6635;
+        color: white;
+        padding: 15px 30px; /* Increased padding */
+        border: none;
+        border-radius: 5px;
+        font-size: 1.2em;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Added shadow */
+    }
+    .cta-button:hover {
+        background-color: #9b5939;
+        transform: translateY(-3px); /* Increased lift */
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Modal Overlay Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.6);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-out;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+        display: flex;
+    }
+
+    .modal-content {
+        background-color: #ffffff;
+        margin: auto;
+        padding: 40px 30px;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4); /* Stronger shadow */
+        position: relative;
+        max-width: 450px;
+        width: 90%;
+        text-align: center;
+        transform: translateY(-50px);
+        opacity: 0;
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .close-button {
+        color: #aaa;
+        font-size: 32px; /* Larger close button */
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .close-button:hover,
+    .close-button:focus {
+        color: #333;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .modal-content h2 {
+        color: #9b5939;
+        margin-bottom: 25px;
+        font-size: 2.2em; /* Slightly larger heading */
+    }
+
+    .modal-content form {
+        display: flex;
+        flex-direction: column;
+        gap: 18px; /* Increased gap */
+    }
+
+    .modal-content input[type="text"],
+    .modal-content input[type="password"],
+    .modal-content input[type="email"] {
+        padding: 15px 18px; /* Increased padding */
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1.1em; /* Larger text */
+        width: calc(100% - 36px); /* Adjusted width for padding */
+    }
+
+    .modal-content button[type="submit"] {
+        background-color: #bd6635;
+        color: white;
+        padding: 15px 25px; /* Increased padding */
+        border: none;
+        border-radius: 5px;
+        font-size: 1.2em; /* Larger text */
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .modal-content button[type="submit"]:hover {
+        background-color: #9b5939;
+    }
+
+    .modal-content p {
+        margin-top: 25px; /* Increased margin */
+        font-size: 1em; /* Slightly larger text */
+    }
+    .modal-content p a {
+        color: #bd6635;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .modal-content p a:hover {
+        text-decoration: underline;
+    }
+
+    #login-message, #register-message {
+        margin-top: 15px;
+        font-weight: bold;
+        color: green;
+        min-height: 1.2em; /* To prevent layout shift when message appears */
+    }
+    #login-message.error, #register-message.error {
+        color: red;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 2.5rem 2rem; /* Increased padding */
+      background-color: white;
+      justify-content: center;
+      flex-grow: 1;
+    }
+    .feature {
+      background-color: #f7f7f7;
+      border-radius: 12px; /* Slightly more rounded */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Stronger shadow */
+      margin: 1.2rem; /* Increased margin */
+      padding: 1.5rem; /* Increased padding */
+      width: 280px; /* Slightly wider cards */
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    }
+    .feature:hover {
+        transform: translateY(-8px); /* More pronounced lift */
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25); /* Stronger hover shadow */
+        background-color: #f4cda7;
+    }
+    .feature h3 {
+      color: #9b5939;
+      font-size: 1.4em; /* Slightly larger heading */
+      margin-top: 15px; /* Space from icon */
+    }
+    /* SVG icons in features */
+    .feature svg {
+        fill: #9b5939;
+        width: 50px; /* Larger icons */
+        height: 50px; /* Larger icons */
+        transition: transform 0.2s ease-in-out;
+    }
+    .feature:hover svg {
+        transform: scale(1.1); /* Icon zoom on hover */
+    }
+    .feature p {
+        font-size: 0.95em; /* Better readability */
+        color: #555;
+    }
+
+    /* New section for professional content */
+    .info-section {
+        padding: 4rem 2rem; /* More vertical space */
+        background-color: #f0f0f0; /* Slightly different background for distinction */
+        text-align: center;
+        border-top: 1px solid #e0e0e0; /* Subtle separator */
+        border-bottom: 1px solid #e0e0e0;
+    }
+    /* Alternating background for sections */
+    #how-to-use {
+        background-color: #ffffff;
+    }
+
+    .info-section h2 {
+        color: #9b5939;
+        font-size: 3rem; /* Larger heading */
+        margin-bottom: 40px;
+    }
+
+    .info-section .info-cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2.5rem; /* Increased gap */
+        margin-top: 40px;
+    }
+
+    .info-section .info-card {
+        background-color: #ffffff; /* White background for cards */
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15); /* Stronger shadow */
+        padding: 2.5rem; /* Increased padding */
+        max-width: 400px;
+        text-align: left;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .info-section .info-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .info-section .info-card h3 {
+        color: #bd6635;
+        font-size: 2rem; /* Larger heading */
+        margin-bottom: 18px;
+    }
+
+    .info-section .info-card p {
+        font-size: 1.05em; /* Slightly larger text */
+        line-height: 1.7; /* Improved line height */
+        color: #444;
+    }
+
+    .info-section .info-card .card-image {
+        width: 100%;
+        height: 220px; /* Slightly taller images */
+        background-color: #eee;
+        margin-bottom: 20px; /* More space */
+        border-radius: 8px;
+        object-fit: cover;
+        display: block;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow for image */
+    }
+
+    footer {
+      background-color: #9b5939;
+      color: white;
+      text-align: center;
+      padding: 1.2rem; /* Slightly more padding */
+      width: 100%;
+      margin-top: 3rem;
+      font-size: 0.95em;
+    }
+    footer a {
+        color: #f4cda7 !important;
+        text-decoration: none;
+        transition: text-decoration 0.2s ease;
+    }
+    footer a:hover {
+        text-decoration: underline;
+    }
+
+    /* --- Responsive Adjustments --- */
+
+    /* For Tablets and smaller Desktops (e.g., up to 900px wide) */
+    @media (max-width: 900px) {
+        .features {
+            padding: 2rem 1.5rem;
+        }
+        .feature {
+            width: 45%;
+            margin: 1rem;
+            padding: 1.2rem;
+        }
+        .modal-content {
+            max-width: 90%;
+            padding: 30px 20px;
+        }
+        .info-section {
+            padding: 3rem 1.5rem;
+        }
+        .info-section .info-card {
+            max-width: 48%; /* Adjust for 2 columns */
+            padding: 2rem;
+        }
+    }
+
+    /* For Mobile Phones (e.g., up to 600px wide) */
+    @media (max-width: 600px) {
+        body {
+            font-size: 15px; /* Base font size for mobile */
+        }
+        header {
+            flex-direction: column;
+            align-items: center;
+            padding: 0.8rem;
+        }
+        header h1 {
+            font-size: 2.2rem;
+        }
+        header nav {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        header nav a {
+            margin: 0.5rem 0.5rem;
+            font-size: 0.95rem;
+        }
+        .hero {
+            padding: 3rem 1rem;
+        }
+        .hero h2 {
+            font-size: 2.8rem;
+        }
+        .hero p {
+            font-size: 1.1rem;
+        }
+        .cta-button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+        }
+        .features {
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+        }
+        .feature {
+            width: 90%;
+            margin: 1rem auto;
+            padding: 1.2rem;
+        }
+        .feature h3 {
+            font-size: 1.3em;
+        }
+        .feature svg {
+            width: 45px;
+            height: 45px;
+        }
+        .modal-content {
+            width: 95%;
+            padding: 25px 20px;
+        }
+        .modal-content h2 {
+            font-size: 2em;
+        }
+        .modal-content input, .modal-content button {
+            padding: 12px 15px;
+            font-size: 1em;
+        }
+        .info-section {
+            padding: 3rem 1rem;
+        }
+        .info-section h2 {
+            font-size: 2.5rem;
+        }
+        .info-section .info-card {
+            max-width: 90%;
+            padding: 2rem;
+        }
+        .info-section .info-card h3 {
+            font-size: 1.6rem;
+        }
+        .info-section .info-card p {
+            font-size: 0.95em;
+        }
+        .info-section .info-card .card-image {
+            height: 180px;
+        }
+        footer {
+            padding: 1rem;
+            font-size: 0.85rem;
+        }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    
+    <h1>TaskNest</h1>
+    <p class="accent">'Nest your tasks easily.'</p>
+    <nav>
+      <a href="#" class="active">Home</a>
+      <a href="#features">Features</a>
+      <a id="login-nav-link">Login</a>
+    </nav>
+  </header>
+  <section class="hero">
+    <h2>Welcome to TaskNest</h2>
+    <p>Manage your tasks effortlessly in your digital nest</p>
+    <button class="cta-button" id="get-started-button">Get Started Now</button>
+  </section>
+
+  <section id="why-tasknest" class="info-section">
+    <h2>Why Choose TaskNest?</h2>
+    <div class="info-cards-container">
+        <div class="info-card">
+            <img src="effortless-organisation.png" alt="Organized Tasks" class="card-image"> <h3>Effortless Organization</h3>
+            <p>TaskNest provides a clean and intuitive interface to quickly add, categorize, and manage all your tasks. Keep everything in one place, reducing mental clutter and boosting clarity.</p>
+        </div>
+        <div class="info-card">
+            <img src="smartreminderandallerts.png" alt="Smart Reminders" class="card-image"> <h3>Smart Reminders & Alerts</h3>
+            <p>Never miss a deadline or an important event again. Our customizable reminder system ensures you get timely notifications, helping you stay on top of your schedule without constant worry.</p>
+        </div>
+        <div class="info-card">
+            <img src="boost-productivity.png" alt="Productivity Boost" class="card-image"> <h3>Boost Your Productivity</h3>
+            <p>With features like gamification, AI suggestions, and progress tracking, TaskNest isn't just a task manager; it's a productivity partner designed to motivate you and help you achieve more every day.</p>
+        </div>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <div class="feature" data-feature-page="todo.html">
+      <a href="todo.html" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 11H20V13H9V11ZM9 7H20V9H9V7ZM9 15H20V17H9V15ZM5 7H7V9H5V7ZM5 11H7V13H5V11ZM5 15H7V17H5V15Z"/>
+          </svg>
+          <h3>To-do List</h3>
+          <p>Create, edit and manage tasks easily.</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="feature" data-feature-page="reminder.html">
+      <a href="reminder.html" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 8V13L15.5 15.5L14.5 17L10 14V8H12ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/>
+          </svg>
+          <h3>Reminders</h3>
+          <p>Set deadlines and get timely alerts.</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="feature" data-feature-page="gamification.html">
+      <a href="gamification.html" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 2C17.5523 2 18 2.44772 18 3V5H19C20.1046 5 21 5.89543 21 7V8C21 9.10457 20.1046 10 19 10H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V10H5C3.89543 10 3 9.10457 3 8V7C3 5.89543 3.89543 5 5 5H6V3C6 2.44772 6.44772 2 7 2H17ZM7 7H5V8H7V7ZM19 7H17V8H19V7Z"/>
+          </svg>
+          <h3>Gamification</h3>
+          <p>Earn points and rewards for productivity.</p>
+        </div>
+      </a>
+    </div>
+
+    <div id="ai-feature-card" class="feature" data-feature-page="ai-suggetion.html">
+      <a href="ai-suggetion.html" style="text-decoration: none; color: inherit;">
+       <div style="display: flex; flex-direction: column; align-items: center;">
+         <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+           <path d="M9.5 2C8.67157 2 8 2.67157 8 3.5C8 4.32843 8.67157 5 9.5 5C10.3284 5 11 4.32843 11 3.5C11 2.67157 10.3284 2 9.5 2ZM6 7V20H8V17H10V20H12V17H14V20H16V7H6ZM18 7V20H20V7H18Z"/>
+         </svg>
+         <h3>AI Suggestions</h3>
+         <p>Let AI help you manage your schedule smartly.</p>
+       </div>
+      </a>
+    </div>
+
+    <div class="feature" data-feature-page="stickynotes.html">
+      <a href="stickynotes.html" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"/>
+            <path d="M9 13H15V15H9V13ZM9 17H15V19H9V17Z"/>
+          </svg>
+          <h3>Sticky Notes</h3>
+          <p>Quickly jot down ideas and thoughts.</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="feature" data-feature-page="calender.html">
+      <a href="calender.html" style="text-decoration: none; color: inherit;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#9b5939" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4ZM5 8H19V6H5V8ZM19 20V10H5V20H19ZM12 13V15H9V13H12ZM15 13V15H18V13H15Z"/>
+            <path d="M7 2V5H9V2H7ZM15 2V5H17V2H15Z"/>
+          </svg>
+          <h3>Calendar View</h3>
+          <p>See your tasks, rewards, and notes by date.</p>
+        </div>
+      </a>
+    </div>
+
+  </section>
+
+  <section id="how-to-use" class="info-section">
+    <h2>How to Use TaskNest?</h2>
+    <div class="info-cards-container">
+        <div class="info-card">
+            <img src="register.png" alt="Register Account" class="card-image"> <h3>1. Create Your Account</h3>
+            <p>Start by registering for free. It's quick, easy, and secure. Once logged in, your data will be saved and accessible from anywhere!</p>
+        </div>
+        <div class="info-card">
+            <img src="tasks.png" alt="Add Tasks" class="card-image"> <h3>2. Add Your First Task</h3>
+            <p>Navigate to the "To-do List" feature and add your first task. You can set due dates, add descriptions, and organize them into categories.</p>
+        </div>
+        <div class="info-card">
+            <img src="boost.jpg" alt="Explore Features" class="card-image"> <h3>3. Explore & Boost</h3>
+            <p>Discover Reminders, Gamification, AI Suggestions, and more. Each feature is designed to make your productivity journey smooth and rewarding.</p>
+        </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 TaskNest | All right reserved.
+    </p>
+  </footer>
+
+  <div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" id="closeLoginModal">&times;</span>
+      <h2>Login to TaskNest</h2>
+      <form id="loginForm">
+        <input type="text" id="loginUsername" placeholder="Username" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit">Login</button>
+      </form>
+      <p id="login-message"></p>
+      <p>Don't have an account? <a id="showRegisterFromLogin">Register here</a></p>
+    </div>
+  </div>
+
+  <div id="registerModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-button" id="closeRegisterModal">&times;</span>
+      <h2>Register for TaskNest</h2>
+      <form id="registerForm">
+        <input type="text" id="regUsername" placeholder="Choose a Username" required>
+        <input type="email" id="regEmail" placeholder="Your Email" required>
+        <input type="password" id="regPassword" placeholder="Choose a Password" required>
+        <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
+        <button type="submit">Register</button>
+      </form>
+      <p id="register-message"></p>
+      <p>Already have an account? <a id="showLoginFromRegister">Login here</a></p>
+    </div>
+  </div>
+
+  <script>
+    // --- DOM Elements ---
+    // Modal Elements
+    const loginModal = document.getElementById('loginModal');
+    const registerModal = document.getElementById('registerModal');
+    const loginNavLink = document.getElementById('login-nav-link');
+    const getStartedButton = document.getElementById('get-started-button');
+    const closeLoginModalButton = document.getElementById('closeLoginModal');
+    const closeRegisterModalButton = document.getElementById('closeRegisterModal');
+    const showRegisterFromLoginLink = document.getElementById('showRegisterFromLogin');
+    const showLoginFromRegisterLink = document.getElementById('showLoginFromRegister');
+
+    // Forms and Messages
+    const loginForm = document.getElementById('loginForm');
+    const loginUsernameInput = document.getElementById('loginUsername');
+    const loginPasswordInput = document.getElementById('loginPassword');
+    const loginMessage = document.getElementById('login-message');
+
+    const registerForm = document.getElementById('registerForm');
+    const regUsernameInput = document.getElementById('regUsername');
+    const regEmailInput = document.getElementById('regEmail');
+    const regPasswordInput = document.getElementById('regPassword');
+    const regConfirmPasswordInput = document.getElementById('regConfirmPassword');
+    const registerMessage = document.getElementById('register-message');
+
+    // Feature Cards
+    const featureCards = document.querySelectorAll('.feature');
+
+    // --- Helper Functions for Modals ---
+    function openModal(modalElement) {
+        modalElement.style.display = 'flex';
+        // Force reflow for transition to work if display was 'none'
+        modalElement.offsetHeight; // eslint-disable-line no-unused-expressions
+        modalElement.classList.add('active');
+    }
+
+    function closeModal(modalElement) {
+        modalElement.classList.remove('active');
+        setTimeout(() => {
+            modalElement.style.display = 'none'; // Then hide it completely after animation
+        }, 300); // Should match CSS transition duration
+    }
+
+    // --- Login & Registration Logic (Client-Side for Demo!) ---
+    function registerUser(username, email, password) {
+        let users = JSON.parse(localStorage.getItem('taskNestUsers')) || {};
+
+        if (users[username]) {
+            return { success: false, message: "Username already exists!" };
+        }
+        if (Object.values(users).some(user => user.email === email)) {
+            return { success: false, message: "Email already registered!" };
+        }
+
+        users[username] = { password: password, email: email };
+        localStorage.setItem('taskNestUsers', JSON.stringify(users));
+        return { success: true, message: "Registration successful! You can now log in." };
+    }
+
+    function authenticateUser(username, password) {
+        let users = JSON.parse(localStorage.getItem('taskNestUsers')) || {};
+        if (users[username] && users[username].password === password) {
+            localStorage.setItem('taskNestLoggedInUser', username);
+            return { success: true, message: "Login successful!" };
+        }
+        return { success: false, message: "Invalid username or password." };
+    }
+
+    function isLoggedIn() {
+        return localStorage.getItem('taskNestLoggedInUser') !== null;
+    }
+
+    function getLoggedInUser() {
+        return localStorage.getItem('taskNestLoggedInUser');
+    }
+
+    // --- Event Listeners ---
+
+    // Open Login Modal from Nav Link
+    // Store handler to remove it later
+    const openLoginModalHandler = (event) => {
+        event.preventDefault();
+        closeModal(registerModal); // Close register if open
+        openModal(loginModal);
+    };
+
+    if (loginNavLink) {
+        loginNavLink.addEventListener('click', openLoginModalHandler);
+    }
+
+    // Open Login Modal from CTA Button
+    if (getStartedButton) {
+        getStartedButton.addEventListener('click', () => {
+            closeModal(registerModal); // Close register if open
+            openModal(loginModal);
+        });
+    }
+
+    // Close Login Modal
+    if (closeLoginModalButton) {
+        closeLoginModalButton.addEventListener('click', () => {
+            closeModal(loginModal);
+            loginForm.reset();
+            loginMessage.textContent = "";
+            loginMessage.classList.remove('error');
+        });
+    }
+
+    // Close Register Modal
+    if (closeRegisterModalButton) {
+        closeRegisterModalButton.addEventListener('click', () => {
+            closeModal(registerModal);
+            registerForm.reset();
+            registerMessage.textContent = "";
+            registerMessage.classList.remove('error');
+        });
+    }
+
+    // Switch from Login to Register
+    if (showRegisterFromLoginLink) {
+        showRegisterFromLoginLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeModal(loginModal);
+            openModal(registerModal);
+            loginForm.reset();
+            loginMessage.textContent = "";
+            loginMessage.classList.remove('error');
+        });
+    }
+
+    // Switch from Register to Login
+    if (showLoginFromRegisterLink) {
+        showLoginFromRegisterLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeModal(registerModal);
+            openModal(loginModal);
+            registerForm.reset();
+            registerMessage.textContent = "";
+            registerMessage.classList.remove('error');
+        });
+    }
+
+    // Close modal when clicking outside of the content
+    window.addEventListener('click', (event) => {
+        if (event.target === loginModal) {
+            closeModal(loginModal);
+            loginForm.reset();
+            loginMessage.textContent = "";
+            loginMessage.classList.remove('error');
+        }
+        if (event.target === registerModal) {
+            closeModal(registerModal);
+            registerForm.reset();
+            registerMessage.textContent = "";
+            registerMessage.classList.remove('error');
+        }
+    });
+
+    // Handle Login Form Submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            loginMessage.textContent = "";
+            loginMessage.classList.remove('error');
+
+            if (!username || !password) {
+                loginMessage.textContent = "Please enter both username and password.";
+                loginMessage.classList.add('error');
+                return;
+            }
+
+            const result = authenticateUser(username, password);
+
+            if (result.success) {
+                loginMessage.textContent = result.message + " Redirecting...";
+                loginMessage.classList.remove('error');
+                console.log("Logged in user:", localStorage.getItem('taskNestLoggedInUser'));
+                alert(result.message + " (Check console for logged in user)");
+                closeModal(loginModal);
+
+                updateLoginStatusInNav();
+                const requestedFeature = sessionStorage.getItem('requestedFeatureBeforeLogin');
+                if (requestedFeature) {
+                    sessionStorage.removeItem('requestedFeatureBeforeLogin');
+                    window.location.href = requestedFeature;
+                }
+            } else {
+                loginMessage.textContent = result.message;
+                loginMessage.classList.add('error');
+            }
+        });
+    }
+
+    // Handle Registration Form Submission
+    if (registerForm) {
+        registerForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const username = regUsernameInput.value.trim();
+            const email = regEmailInput.value.trim();
+            const password = regPasswordInput.value.trim();
+            const confirmPassword = regConfirmPasswordInput.value.trim();
+
+            registerMessage.textContent = "";
+            registerMessage.classList.remove('error');
+
+            if (!username || !email || !password || !confirmPassword) {
+                registerMessage.textContent = "All fields are required.";
+                registerMessage.classList.add('error');
+                return;
+            }
+
+            if (password.length < 6) {
+                registerMessage.textContent = "Password must be at least 6 characters long.";
+                registerMessage.classList.add('error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                registerMessage.textContent = "Passwords do not match.";
+                registerMessage.classList.add('error');
+                return;
+            }
+
+            if (!email.includes('@') || !email.includes('.')) {
+                registerMessage.textContent = "Please enter a valid email address.";
+                registerMessage.classList.add('error');
+                return;
+            }
+
+            const result = registerUser(username, email, password);
+            if (result.success) {
+                registerMessage.textContent = result.message;
+                registerMessage.classList.remove('error');
+                registerForm.reset();
+                setTimeout(() => {
+                    closeModal(registerModal);
+                    openModal(loginModal);
+                    loginUsernameInput.value = username;
+                    loginPasswordInput.focus();
+                }, 1500);
+            } else {
+                registerMessage.textContent = result.message;
+                registerMessage.classList.add('error');
+            }
+        });
+    }
+
+    // --- Feature Access Control Logic ---
+    featureCards.forEach(card => {
+        card.addEventListener('click', function(event) {
+            const featureLink = this.querySelector('a');
+            const targetPage = featureLink.getAttribute('href');
+
+            if (!isLoggedIn()) {
+                event.preventDefault(); // Prevent default navigation
+                alert("Please login to use this feature and save your data!");
+                sessionStorage.setItem('requestedFeatureBeforeLogin', targetPage); // Store requested page
+                openModal(loginModal); // Open login modal
+            }
+            // If logged in, the default navigation will proceed
+        });
+    });
+
+    // Update Login/Logout status in Nav
+    function updateLoginStatusInNav() {
+        if (isLoggedIn()) {
+            loginNavLink.textContent = `Logout (${getLoggedInUser()})`;
+            loginNavLink.removeEventListener('click', openLoginModalHandler); // Remove old listener
+            loginNavLink.addEventListener('click', logoutUser); // Add logout listener
+        } else {
+            loginNavLink.textContent = 'Login';
+            loginNavLink.removeEventListener('click', logoutUser); // Remove old listener
+            loginNavLink.addEventListener('click', openLoginModalHandler); // Add login listener
+        }
+    }
+
+    function logoutUser(event) {
+        event.preventDefault();
+        localStorage.removeItem('taskNestLoggedInUser');
+        alert("Logged out successfully!");
+        updateLoginStatusInNav();
+        // Reloading the page will effectively discard any unsaved data if those pages rely on session storage
+        window.location.reload();
+    }
+
+
+    // --- Initial Load & Interval Updates ---
+    // Ensure modals are hidden on page load by default
+    if (loginModal) {
+      loginModal.style.display = 'none';
+    }
+    if (registerModal) {
+      registerModal.style.display = 'none';
+    }
+
+    // Call this on initial load to set the correct login status
+    updateLoginStatusInNav();
+  </script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskNest - Calendar View</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles (Consistent with your TaskNest theme) */
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    html { height: 100%; }
+   
+
+    /* Main Content Area */
+    .calendar-dashboard {
+      flex-grow: 1;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 20px auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      flex-wrap: wrap; /* Allow wrapping for responsiveness */
+    }
+
+    /* Left Sidebar for Details */
+    .sidebar {
+      flex: 1;
+      min-width: 280px; /* Minimum width for sidebar */
+      padding: 15px;
+      background-color: #f1e1d2; /* Light blue background */
+      border-radius: 8px;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+      border: 1px solid #e0e0e0;
+    }
+    .sidebar h3 {
+      color: #bd6635;
+      margin-top: 0;
+      border-bottom: 1px solid #f4cda7;
+      padding-bottom: 10px;
+    }
+    .sidebar-section {
+      margin-bottom: 20px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      background-color: #f4cda7; /* Lighter background for list items */
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      border-left: 4px solid #f4cda7;
+    }
+    .sidebar ul li.completed-task {
+      border-left-color: #28a745; /* Green for completed tasks */
+      background-color: #e6ffe6;
+    }
+    .sidebar ul li.sticky-note-item {
+      border-left-color: #ffeb3b; /* Yellow for notes */
+      background-color: #fff9e6;
+    }
+    .sidebar ul li.reward-item {
+      border-left-color: #ffc107; /* Amber for rewards */
+      background-color: #fffde6;
+    }
+    .sidebar .no-items {
+      color: #777;
+      font-style: italic;
+      font-size: 0.9rem;
+      padding: 10px 0;
+    }
+
+    /* Calendar Grid */
+    .calendar-main {
+      flex: 3; /* Calendar takes more space */
+      min-width: 600px; /* Minimum width for calendar */
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+      border: 1px solid #e0e0e0;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      color: #9b5939;
+    }
+    .calendar-header button {
+      background-color: #bd6635;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+    .calendar-header button:hover {
+      background-color: #f4cda7;
+    }
+    .calendar-weekdays, .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+    .calendar-weekdays div {
+      font-weight: bold;
+      padding: 10px 0;
+      color: #555;
+    }
+    .calendar-day {
+      padding: 15px 5px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+      position: relative; /* For event dots */
+      min-height: 80px; /* Ensure a decent size for days */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .calendar-day.inactive {
+      color: #ccc;
+      background-color: #fcfcfc;
+      cursor: not-allowed;
+    }
+    .calendar-day:not(.inactive):hover {
+      background-color: #e6f7ff;
+      border-color: #a7d9ff;
+    }
+    .calendar-day.selected {
+      background-color: #9f4d23;
+      color: white;
+      font-weight: bold;
+    }
+    .calendar-day.has-events {
+        border: 2px solid #915f46; /* Indicate days with events */
+    }
+    .calendar-day .day-number {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .event-dots {
+      display: flex;
+      gap: 3px;
+      margin-top: 5px;
+    }
+    .event-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #888; /* Default dot color */
+    }
+    .event-dot.task-dot { background-color: #4567b7; }
+    .event-dot.reward-dot { background-color: #ffc107; }
+    .event-dot.note-dot { background-color: #ffeb3b; }
+
+   
+
+    /* Responsive Adjustments */
+    @media (max-width: 900px) {
+        .calendar-dashboard {
+            flex-direction: column; /* Stack sidebar and calendar */
+            padding: 15px;
+            margin: 15px auto;
+        }
+        .sidebar {
+            min-width: unset; /* Remove min-width */
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .calendar-main {
+            min-width: unset; /* Remove min-width */
+            width: 100%;
+            padding: 15px;
+        }
+        .calendar-day {
+            min-height: 60px; /* Smaller height for days on mobile */
+            padding: 10px 3px;
+            font-size: 0.9rem;
+        }
+        .calendar-day .day-number {
+            font-size: 1em;
+        }
+        .calendar-header {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 600px) {
+        header {
+            flex-direction: column;
+            align-items: center;
+            padding: 0.8rem;
+        }
+        header h1 { font-size: 1.8rem; }
+        header nav { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
+        header nav a { margin: 0.5rem 0.5rem; font-size: 0.9rem; }
+        footer { padding: 0.8rem; font-size: 0.85rem; }
+        .calendar-dashboard {
+            padding: 10px;
+            margin: 10px auto;
+        }
+        .sidebar h3 { font-size: 1.1rem; }
+        .sidebar ul li { font-size: 0.85rem; padding: 8px; }
+        .calendar-header button { padding: 6px 10px; font-size: 0.9rem; }
+        .calendar-weekdays div { padding: 8px 0; font-size: 0.9rem; }
+        .calendar-day { padding: 8px 2px; }
+        .event-dot { width: 5px; height: 5px; }
+    }
+  </style>
+</head>
+<body>
+  
+
+  <main class="calendar-dashboard">
+    <div class="sidebar">
+      <h3>Details for <span id="selected-date-display">Today</span></h3>
+      <div class="sidebar-section">
+        <h4>Tasks</h4>
+        <ul id="sidebar-tasks">
+          <li class="no-items">Select a date to see tasks.</li>
+        </ul>
+      </div>
+      <div class="sidebar-section">
+        <h4>Rewards Earned</h4>
+        <ul id="sidebar-rewards">
+          <li class="no-items">Select a date to see rewards.</li>
+        </ul>
+      </div>
+      <div class="sidebar-section">
+        <h4>Sticky Notes</h4>
+        <ul id="sidebar-notes">
+          <li class="no-items">Select a date to see notes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="calendar-main">
+      <div class="calendar-header">
+        <button id="prev-month">Prev</button>
+        <div id="current-month-year"></div>
+        <button id="next-month">Next</button>
+      </div>
+      <div class="calendar-weekdays">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="calendar-days" class="calendar-days">
+        </div>
+    </div>
+  </main>
+
+ 
+  <script>
+    // --- DOM Elements ---
+    const currentMonthYear = document.getElementById('current-month-year');
+    const calendarDaysGrid = document.getElementById('calendar-days');
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const selectedDateDisplay = document.getElementById('selected-date-display');
+    const sidebarTasksList = document.getElementById('sidebar-tasks');
+    const sidebarRewardsList = document.getElementById('sidebar-rewards');
+    const sidebarNotesList = document.getElementById('sidebar-notes');
+
+    // --- State Variables ---
+    let currentDate = new Date(); // Current date for calendar rendering
+    let selectedDate = new Date(); // Stores the date selected by the user
+    let allTasks = [];
+    let allRewards = []; // We will simulate or fetch these
+    let allStickyNotes = [];
+
+    // --- Data Loading Functions ---
+    function loadAllData() {
+        // Load tasks from todo.html's localStorage (assuming 'taskNestTasks')
+        allTasks = localStorage.getItem('taskNestTasks') ? JSON.parse(localStorage.getItem('taskNestTasks')) : [];
+
+        // Load gamification points history (rewards/achievements)
+        // This is a simplified example. In a real app, 'rewards' would be an array of objects
+        // with 'date' and 'points' or 'description'.
+        // For now, let's derive it from completed tasks if 'completedDate' exists.
+        allRewards = allTasks
+            .filter(task => task.completed && task.completedDate)
+            .map(task => ({
+                description: `Completed task: "${task.text}"`,
+                date: task.completedDate,
+                points: 10 // Assuming 10 points per task from gamification.html
+            }));
+
+
+        // Load sticky notes from stickynotes.html's localStorage (assuming 'taskNestStickyNotes')
+        allStickyNotes = localStorage.getItem('taskNestStickyNotes') ? JSON.parse(localStorage.getItem('taskNestStickyNotes')) : [];
+    }
+
+
+    // --- Calendar Rendering Functions ---
+
+    function renderCalendar() {
+      loadAllData(); // Reload data before rendering calendar
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth(); // 0-indexed
+
+      currentMonthYear.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+      calendarDaysGrid.innerHTML = ''; // Clear previous days
+
+      const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 for Sunday, 1 for Monday...
+      const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get last day of month
+
+      // Add empty cells for days before the 1st
+      for (let i = 0; i < firstDayOfMonth; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.classList.add('calendar-day', 'inactive');
+        calendarDaysGrid.appendChild(emptyDiv);
+      }
+
+      // Add days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.classList.add('calendar-day');
+        dayDiv.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; // YYYY-MM-DD
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+
+        const fullDate = new Date(year, month, day);
+
+        // Add event dots
+        const eventDotsContainer = document.createElement('div');
+        eventDotsContainer.classList.add('event-dots');
+        let hasEventsToday = false;
+
+        // Check for tasks due today
+        const tasksToday = allTasks.filter(task =>
+          task.date && new Date(task.date).toDateString() === fullDate.toDateString()
+        );
+        if (tasksToday.length > 0) {
+          const taskDot = document.createElement('span');
+          taskDot.classList.add('event-dot', 'task-dot');
+          taskDot.title = `${tasksToday.length} task(s) due`;
+          eventDotsContainer.appendChild(taskDot);
+          hasEventsToday = true;
+        }
+
+        // Check for rewards earned today
+        const rewardsToday = allRewards.filter(reward =>
+            reward.date && new Date(reward.date).toDateString() === fullDate.toDateString()
+        );
+        if (rewardsToday.length > 0) {
+            const rewardDot = document.createElement('span');
+            rewardDot.classList.add('event-dot', 'reward-dot');
+            rewardDot.title = `${rewardsToday.length} reward(s) earned`;
+            eventDotsContainer.appendChild(rewardDot);
+            hasEventsToday = true;
+        }
+
+        // Check for sticky notes added today
+        const notesToday = allStickyNotes.filter(note =>
+            note.timestamp && new Date(note.timestamp).toDateString() === fullDate.toDateString()
+        );
+        if (notesToday.length > 0) {
+            const noteDot = document.createElement('span');
+            noteDot.classList.add('event-dot', 'note-dot');
+            noteDot.title = `${notesToday.length} sticky note(s) added`;
+            eventDotsContainer.appendChild(noteDot);
+            hasEventsToday = true;
+        }
+
+        if (hasEventsToday) {
+            dayDiv.classList.add('has-events');
+        }
+
+        dayDiv.appendChild(eventDotsContainer);
+        calendarDaysGrid.appendChild(dayDiv);
+      }
+
+      // Automatically select today's date if it's in the current month
+      if (
+        selectedDate.getMonth() === month &&
+        selectedDate.getFullYear() === year
+      ) {
+        const todayElement = calendarDaysGrid.querySelector(
+          `[data-date="${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}"]`
+        );
+        if (todayElement) {
+          todayElement.classList.add('selected');
+        }
+      }
+      updateSidebar(selectedDate); // Update sidebar for the initially selected date
+    }
+
+    // --- Sidebar Update Function ---
+
+    function updateSidebar(date) {
+        selectedDateDisplay.textContent = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        sidebarTasksList.innerHTML = '';
+        sidebarRewardsList.innerHTML = '';
+        sidebarNotesList.innerHTML = '';
+
+        const formattedDate = date.toDateString(); // For comparison
+
+        // Filter tasks due on selected date
+        const tasksOnDate = allTasks.filter(task =>
+            task.date && new Date(task.date).toDateString() === formattedDate
+        );
+        if (tasksOnDate.length > 0) {
+            tasksOnDate.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task.text;
+                li.classList.add(task.completed ? 'completed-task' : '');
+                sidebarTasksList.appendChild(li);
+            });
+        } else {
+            sidebarTasksList.innerHTML = '<li class="no-items">No tasks due today.</li>';
+        }
+
+        // Filter rewards earned on selected date
+        const rewardsOnDate = allRewards.filter(reward =>
+            reward.date && new Date(reward.date).toDateString() === formattedDate
+        );
+        if (rewardsOnDate.length > 0) {
+            rewardsOnDate.forEach(reward => {
+                const li = document.createElement('li');
+                li.textContent = `${reward.description} (+${reward.points} pts)`;
+                li.classList.add('reward-item');
+                sidebarRewardsList.appendChild(li);
+            });
+        } else {
+            sidebarRewardsList.innerHTML = '<li class="no-items">No rewards earned today.</li>';
+        }
+
+        // Filter sticky notes added on selected date
+        const notesOnDate = allStickyNotes.filter(note =>
+            note.timestamp && new Date(note.timestamp).toDateString() === formattedDate
+        );
+        if (notesOnDate.length > 0) {
+            notesOnDate.forEach(note => {
+                const li = document.createElement('li');
+                li.textContent = note.text;
+                li.classList.add('sticky-note-item');
+                li.style.borderColor = getStickyNoteColor(note.color); // Apply specific border color
+                li.style.backgroundColor = getStickyNoteLightColor(note.color); // Apply specific background color
+                sidebarNotesList.appendChild(li);
+            });
+        } else {
+            sidebarNotesList.innerHTML = '<li class="no-items">No sticky notes added today.</li>';
+        }
+    }
+
+    // Helper to get actual color from color name for sidebar items
+    function getStickyNoteColor(colorName) {
+        switch(colorName) {
+            case 'yellow': return '#ffeb3b';
+            case 'green': return '#c8e6c9';
+            case 'blue': return '#bbdefb';
+            case 'pink': return '#f8bbd0';
+            case 'purple': return '#e1bee7';
+            case 'orange': return '#ffe0b2';
+            default: return '#ccc';
+        }
+    }
+
+    function getStickyNoteLightColor(colorName) {
+        switch(colorName) {
+            case 'yellow': return '#fff9e6'; // Lighter shade of yellow
+            case 'green': return '#e6ffe6';
+            case 'blue': return '#e6f7ff';
+            case 'pink': return '#fff0f5';
+            case 'purple': return '#f9e6ff';
+            case 'orange': return '#fff5e6';
+            default: return '#f0f0f0';
+        }
+    }
+
+
+    // --- Event Listeners ---
+
+    prevMonthBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    calendarDaysGrid.addEventListener('click', (event) => {
+      const clickedDay = event.target.closest('.calendar-day');
+      if (clickedDay && !clickedDay.classList.contains('inactive')) {
+        // Remove 'selected' from previously selected day
+        const previouslySelected = calendarDaysGrid.querySelector('.calendar-day.selected');
+        if (previouslySelected) {
+          previouslySelected.classList.remove('selected');
+        }
+        // Add 'selected' to the clicked day
+        clickedDay.classList.add('selected');
+
+        // Update selectedDate and sidebar
+        const dateString = clickedDay.dataset.date; // YYYY-MM-DD
+        const [year, month, day] = dateString.split('-').map(Number);
+        selectedDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+        updateSidebar(selectedDate);
+      }
+    });
+
+    // --- Initial Load ---
+    // Set selectedDate to today initially for sidebar
+    selectedDate = new Date();
+    selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day for accurate comparison
+
+    renderCalendar(); // Render calendar on page load
+  </script>
+</body>
+</html>
